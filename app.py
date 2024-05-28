@@ -2,13 +2,65 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from PIL import Image
 import os
+import schedule
+import time
+import threading
+import datetime
+
+
+scheduler = None  # Global variable to hold the scheduler
 
 app = Flask(__name__)
 CORS(app)
 
+IMAGE_SIZES = {
+    'yt-thumbnail': (1280, 720),
+    'yt-cover': (2560, 1440),
+    'yt-end-screen': (1920, 1080),
+    'yt-channel-art': (2560, 1440),
+    'yt-banner': (2560, 1440),
+
+    'facebook-story': (1080, 1920),
+    'facebook-square': (1200, 1200),
+    'facebook-event-cover': (1920, 1080),
+    'facebook-cover': (1600, 900),
+    'facebook-post': (1200, 630),
+    'facebook-ad': (1200, 628),
+    'facebook-group-cover': (1640, 856),
+    'facebook-cover-photo': (820, 312),
+
+    'instagram-story': (1080, 1920),
+    'instagram-portrait': (1080, 1350),
+    'instagram-post': (1080, 1080),
+    'instagram-landscape': (1080, 566)
+}
+
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+def cleanup_folder():
+    for filename in os.listdir(UPLOAD_FOLDER):
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        try:
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                print(f"Removed {filename} at {datetime.datetime.now()}")
+        except Exception as e:
+            print(f"Error removing {filename} at {datetime.datetime.now()}: {str(e)}")
+
+# Schedule the cleanup_folder function to run every 5 minutes
+schedule.every(5).minutes.do(cleanup_folder)
+
+def reset_scheduler():
+    global scheduler
+    if scheduler:
+        # Stop the currently running scheduler
+        schedule.clear(scheduler)
+
+    # Create a new scheduler and schedule the cleanup_folder function
+    scheduler = schedule.every(5).minutes.do(cleanup_folder)
+
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
@@ -22,7 +74,7 @@ def upload_image():
     # Resize and crop the image
     with Image.open(filename) as img:
         original_width, original_height = img.size
-        target_width, target_height = 1080, 1920
+        target_width, target_height = IMAGE_SIZES.get(request.form.get('format', 'yt-thumbnail'), (1280, 720))
         
         # Calculate the new size while maintaining aspect ratio
         aspect_ratio = original_width / original_height
@@ -43,6 +95,7 @@ def upload_image():
 
         img = img.crop((left, top, right, bottom))
         img.save(filename)
+        reset_scheduler()
     
     return jsonify({'message': 'Image uploaded and resized successfully', 'filename': filename})
 
@@ -63,5 +116,14 @@ def delete_image(filename):
     else:
         return jsonify({'error': 'File not found'}), 404
 
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
 if __name__ == '__main__':
+    print("Starting Flask app and cleanup scheduler...")
+    reset_scheduler()  # Schedule the cleanup_folder function initially
+    scheduler_thread = threading.Thread(target=run_scheduler)
+    scheduler_thread.start()
     app.run(debug=True)
