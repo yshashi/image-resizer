@@ -14,11 +14,11 @@ app = Flask(__name__)
 CORS(app)
 
 IMAGE_SIZES = {
-    'yt-thumbnail': (1280, 720),
-    'yt-cover': (2560, 1440),
-    'yt-end-screen': (1920, 1080),
-    'yt-channel-art': (2560, 1440),
-    'yt-banner': (2560, 1440),
+    'youtube-thumbnail': (1280, 720),
+    'youtube-cover': (2560, 1440),
+    'youtube-end-screen': (1920, 1080),
+    'youtube-channel-art': (2560, 1440),
+    'youtube-banner': (2560, 1440),
 
     'facebook-story': (1080, 1920),
     'facebook-square': (1200, 1200),
@@ -74,7 +74,7 @@ def upload_image():
     # Resize and crop the image
     with Image.open(filename) as img:
         original_width, original_height = img.size
-        target_width, target_height = IMAGE_SIZES.get(request.form.get('format', 'yt-thumbnail'), (1280, 720))
+        target_width, target_height = IMAGE_SIZES.get(request.form.get('format', 'youtube-thumbnail'), (1280, 720))
         
         # Calculate the new size while maintaining aspect ratio
         aspect_ratio = original_width / original_height
@@ -97,7 +97,7 @@ def upload_image():
         img.save(filename)
         reset_scheduler()
     
-    return jsonify({'message': 'Image uploaded and resized successfully', 'filename': filename})
+    return jsonify({'message': 'Image uploaded and resized successfully', 'filename': filename.split('/')[-1]})
 
 @app.route('/download/<filename>', methods=['GET'])
 def download_image(filename):
@@ -126,4 +126,4 @@ if __name__ == '__main__':
     reset_scheduler()  # Schedule the cleanup_folder function initially
     scheduler_thread = threading.Thread(target=run_scheduler)
     scheduler_thread.start()
-    app.run(debug=True)
+    app.run(debug=False)
