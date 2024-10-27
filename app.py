@@ -74,6 +74,7 @@ def upload_image():
     file = request.files['image']
     filename = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(filename)
+    print(f"File saved at: {filename}")  # Debug print
 
     # Resize and crop the image
     with Image.open(filename) as img:
@@ -111,13 +112,16 @@ def download_image(filename):
     else:
         return jsonify({'error': 'File not found'}), 404
 
-@app.route('/delete/<filename>', methods=['DELETE'])
-def delete_image(filename):
+@app.route('/download/<filename>', methods=['GET'])
+def download_image(filename):
     path = os.path.join(UPLOAD_FOLDER, filename)
+    print(f"Requested file: {filename}")  # Debugging print
+    print(f"Full path: {path}")
+    
     if os.path.exists(path):
-        os.remove(path)
-        return jsonify({'message': 'File deleted successfully'})
+        return send_file(path, as_attachment=True)
     else:
+        print("File not found")  # Debugging print
         return jsonify({'error': 'File not found'}), 404
 
 def run_scheduler():
