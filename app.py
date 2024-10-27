@@ -77,7 +77,6 @@ def upload_image():
     return jsonify({'message': 'Image uploaded successfully', 'filename': file.filename})
 
 @app.route('/download/<filename>', methods=['POST'])
-@cross_origin()
 def download_image(filename):
     data = request.get_json()  # Get JSON payload from POST body
     format = data.get('format', 'youtube-thumbnail')  # Retrieve format from JSON data
