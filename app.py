@@ -75,7 +75,7 @@ def upload_image():
     file.save(file_path)
     return jsonify({'message': 'Image uploaded successfully', 'filename': file.filename})
 
-@app.route('/download/<filename>', methods=['GET'])
+@app.route('/download/<filename>', methods=['POST'])
 @cross_origin()
 def download_image(filename):
     format = request.args.get('format', 'youtube-thumbnail')
