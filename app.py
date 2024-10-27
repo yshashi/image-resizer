@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, send_file
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from PIL import Image
 import os
 import schedule
@@ -76,6 +76,7 @@ def upload_image():
     return jsonify({'message': 'Image uploaded successfully', 'filename': file.filename})
 
 @app.route('/download/<filename>', methods=['GET'])
+@cross_origin()
 def download_image(filename):
     format = request.args.get('format', 'youtube-thumbnail')
     target_size = IMAGE_SIZES.get(format)
@@ -84,7 +85,6 @@ def download_image(filename):
         return jsonify({'error': f'Invalid format: {format}'}), 400
 
     file_path = os.path.join(UPLOAD_FOLDER, filename)
-    return jsonify({'PATH': file_path})
     print(file_path)
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
