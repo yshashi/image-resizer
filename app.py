@@ -11,6 +11,26 @@ import datetime
 scheduler = None  # Global variable to hold the scheduler
 
 app = Flask(__name__)
+# Enable CORS with more permissive settings for development
+CORS(app, resources={
+    r"/*": {
+        "origins": ["https://resizer.letsprogram.in"],  # Update with your frontend origin
+        "methods": ["GET", "POST", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "Accept"],
+        "expose_headers": ["Content-Disposition"],
+        "supports_credentials": True
+    }
+})
+
+@app.after_request
+def after_request(response):
+    origin = request.headers.get('Origin')
+    if origin:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 IMAGE_SIZES = {
     'youtube-thumbnail': (1280, 720),
@@ -76,34 +96,44 @@ def upload_image():
     return jsonify({'message': 'Image uploaded successfully', 'filename': file.filename})
 
 @app.route('/download', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def download_image():
     if request.method == 'OPTIONS':
-        # Explicitly handle OPTIONS request
-        response = app.make_default_options_response()
-        return response
+        return '', 204
     
-    data = request.get_json()  # Get JSON payload from POST body
-    format = data.get('format', 'youtube-thumbnail')  # Retrieve format from JSON data
-    filename = data.get('filename')  # Retrieve file name from JSON data
-    target_size = IMAGE_SIZES.get(format)
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data received'}), 400
+            
+        format = data.get('format', 'youtube-thumbnail')
+        filename = data.get('filename')
+        
+        if not filename:
+            return jsonify({'error': 'Filename is required'}), 400
+            
+        target_size = IMAGE_SIZES.get(format)
+        if not target_size:
+            return jsonify({'error': f'Invalid format: {format}'}), 400
 
-    if not target_size:
-        return jsonify({'error': f'Invalid format: {format}'}), 400
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'File not found'}), 404
 
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    print(file_path)
-    if not os.path.exists(file_path):
-        return jsonify({'error': 'File not found'}), 404
-
-    resized_image_path = resize_image(file_path, target_size, format)
-    response = send_file(
-        resized_image_path,
-        as_attachment=True,
-        download_name=f"resized_{filename}"
-    )
-    response.headers['Access-Control-Allow-Origin'] = 'https://resizer.letsprogram.in'
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    return response
+        resized_image_path = resize_image(file_path, target_size, format)
+        
+        response = send_file(
+            resized_image_path,
+            mimetype='image/jpeg',
+            as_attachment=True,
+            download_name=f"resized_{filename}"
+        )
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error in download_image: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 def resize_image(file_path, target_size, format):
     resized_path = os.path.join(UPLOAD_FOLDER, f"{format}_{os.path.basename(file_path)}")
