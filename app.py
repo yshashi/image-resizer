@@ -11,7 +11,6 @@ import datetime
 scheduler = None  # Global variable to hold the scheduler
 
 app = Flask(__name__)
-CORS(app)
 
 IMAGE_SIZES = {
     'youtube-thumbnail': (1280, 720),
@@ -67,6 +66,7 @@ def test():
 
 
 @app.route('/upload', methods=['POST'])
+@cross_origin()
 def upload_image():
     if 'image' not in request.files:
         return jsonify({'error': 'No image uploaded'}), 400
@@ -77,6 +77,7 @@ def upload_image():
     return jsonify({'message': 'Image uploaded successfully', 'filename': file.filename})
 
 @app.route('/download/<filename>', methods=['POST'])
+@cross_origin()
 def download_image(filename):
     data = request.get_json()  # Get JSON payload from POST body
     format = data.get('format', 'youtube-thumbnail')  # Retrieve format from JSON data
@@ -121,6 +122,7 @@ def resize_image(file_path, target_size, format):
     return resized_path
 
 @app.route('/delete/<filename>', methods=['DELETE'])
+@cross_origin()
 def delete_image(filename):
     path = os.path.join(UPLOAD_FOLDER, filename)
     if os.path.exists(path):
