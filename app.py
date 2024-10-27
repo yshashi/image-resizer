@@ -66,7 +66,6 @@ def test():
 
 
 @app.route('/upload', methods=['POST'])
-@cross_origin()
 def upload_image():
     if 'image' not in request.files:
         return jsonify({'error': 'No image uploaded'}), 400
@@ -77,7 +76,6 @@ def upload_image():
     return jsonify({'message': 'Image uploaded successfully', 'filename': file.filename})
 
 @app.route('/download', methods=['POST'])
-@cross_origin()
 def download_image():
     data = request.get_json()  # Get JSON payload from POST body
     format = data.get('format', 'youtube-thumbnail')  # Retrieve format from JSON data
