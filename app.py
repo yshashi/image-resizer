@@ -62,7 +62,7 @@ def reset_scheduler():
 
 @app.route('/test', methods=['GET'])
 def test():
-    return jsonify({'message': 'Hello World!'})
+    return jsonify({'PATH': UPLOAD_FOLDER})
 
 
 @app.route('/upload', methods=['POST'])
