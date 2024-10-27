@@ -75,8 +75,13 @@ def upload_image():
     file.save(file_path)
     return jsonify({'message': 'Image uploaded successfully', 'filename': file.filename})
 
-@app.route('/download', methods=['POST'])
+@app.route('/download', methods=['POST', 'OPTIONS'])
 def download_image():
+    if request.method == 'OPTIONS':
+        # Explicitly handle OPTIONS request
+        response = app.make_default_options_response()
+        return response
+    
     data = request.get_json()  # Get JSON payload from POST body
     format = data.get('format', 'youtube-thumbnail')  # Retrieve format from JSON data
     filename = data.get('filename')  # Retrieve file name from JSON data
@@ -91,7 +96,14 @@ def download_image():
         return jsonify({'error': 'File not found'}), 404
 
     resized_image_path = resize_image(file_path, target_size, format)
-    return send_file(resized_image_path, as_attachment=True)
+    response = send_file(
+        resized_image_path,
+        as_attachment=True,
+        download_name=f"resized_{filename}"
+    )
+    response.headers['Access-Control-Allow-Origin'] = 'https://resizer.letsprogram.in'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
 
 def resize_image(file_path, target_size, format):
     resized_path = os.path.join(UPLOAD_FOLDER, f"{format}_{os.path.basename(file_path)}")
