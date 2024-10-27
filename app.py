@@ -11,7 +11,7 @@ import datetime
 scheduler = None  # Global variable to hold the scheduler
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "https://resizer.letsprogram.in"}})
 
 IMAGE_SIZES = {
     'youtube-thumbnail': (1280, 720),
