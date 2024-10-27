@@ -96,7 +96,6 @@ def upload_image():
     return jsonify({'message': 'Image uploaded successfully', 'filename': file.filename})
 
 @app.route('/download', methods=['POST', 'OPTIONS'])
-@cross_origin()
 def download_image():
     if request.method == 'OPTIONS':
         return '', 204
