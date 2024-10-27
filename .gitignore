@@ -1,3 +1,43 @@
-.vercel
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+
+# VSCode settings
+.vscode/
+
+# Vercel deployment files
+.vercel/
+
+# Flask and other Python logs
+*.log
+
+# Python egg files
+*.egg
+*.egg-info/
+dist/
+build/
+*.dist-info
+
+# Flask uploads folder (optional, if you don't want to track uploaded files)
+uploads/
+
+# MacOS system files
 .DS_Store
-.vscode
+
+# Environment variables
+.env
+
+# Python package manager files
+pip-log.txt
+pip-delete-this-directory.txt
+
+# WSGI files (optional, if they are generated or not essential)
+wsgi.pyc
+wsgi.pyo
+
+venv/

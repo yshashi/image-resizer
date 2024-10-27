@@ -11,7 +11,7 @@ import datetime
 scheduler = None  # Global variable to hold the scheduler
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins="*")
 
 IMAGE_SIZES = {
     'youtube-thumbnail': (1280, 720),
@@ -60,6 +60,10 @@ def reset_scheduler():
 
     # Create a new scheduler and schedule the cleanup_folder function
     scheduler = schedule.every(5).minutes.do(cleanup_folder)
+
+@app.route('/test', methods=['GET'])
+def test():
+    return jsonify({'message': 'Hello World!'})
 
 
 @app.route('/upload', methods=['POST'])
@@ -126,4 +130,4 @@ if __name__ == '__main__':
     reset_scheduler()  # Schedule the cleanup_folder function initially
     scheduler_thread = threading.Thread(target=run_scheduler)
     scheduler_thread.start()
-    app.run(debug=False)
+    app.run(port=8100, debug=False)
