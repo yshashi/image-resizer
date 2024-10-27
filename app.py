@@ -35,7 +35,7 @@ IMAGE_SIZES = {
     'instagram-landscape': (1080, 566)
 }
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
