@@ -72,15 +72,32 @@ def upload_image():
         return jsonify({'error': 'No image uploaded'}), 400
     
     file = request.files['image']
-    filename = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(filename)
+    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(file_path)
+    return jsonify({'message': 'Image uploaded successfully', 'filename': file.filename})
 
-    # Resize and crop the image
-    with Image.open(filename) as img:
+@app.route('/download/<filename>', methods=['GET'])
+def download_image(filename):
+    format = request.args.get('format', 'youtube-thumbnail')
+    target_size = IMAGE_SIZES.get(format)
+
+    if not target_size:
+        return jsonify({'error': f'Invalid format: {format}'}), 400
+
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'File not found'}), 404
+
+    resized_image_path = resize_image(file_path, target_size, format)
+    return send_file(resized_image_path, as_attachment=True)
+
+def resize_image(file_path, target_size, format):
+    resized_path = os.path.join(UPLOAD_FOLDER, f"{format}_{os.path.basename(file_path)}")
+    
+    with Image.open(file_path) as img:
         original_width, original_height = img.size
-        target_width, target_height = IMAGE_SIZES.get(request.form.get('format', 'youtube-thumbnail'), (1280, 720))
-        
-        # Calculate the new size while maintaining aspect ratio
+        target_width, target_height = target_size
+
         aspect_ratio = original_width / original_height
         if aspect_ratio > target_width / target_height:
             new_height = target_height
@@ -88,31 +105,18 @@ def upload_image():
         else:
             new_width = target_width
             new_height = int(new_width / aspect_ratio)
-        
+
         img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
         
-        # Calculate cropping box
         left = (new_width - target_width) / 2
         top = (new_height - target_height) / 2
         right = (new_width + target_width) / 2
         bottom = (new_height + target_height) / 2
 
         img = img.crop((left, top, right, bottom))
-        img.save(filename)
-        reset_scheduler()
-    
-    return jsonify({'message': 'Image uploaded and resized successfully', 'filename': filename.split('/')[-1]})
+        img.save(resized_path)
 
-@app.route('/download/<filename>', methods=['GET'])
-def download_image(filename):
-    path = os.path.join(UPLOAD_FOLDER, filename)
-    print(f"Requested file: {filename}")  # Debugging print
-    print(f"Full path: {path}")
-    if os.path.exists(path):
-        return send_file(path, as_attachment=True)
-    else:
-        print("File not found")  # Debugging print
-        return jsonify({'error': 'File not found'}), 404
+    return resized_path
 
 @app.route('/delete/<filename>', methods=['DELETE'])
 def delete_image(filename):
