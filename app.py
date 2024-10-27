@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS, cross_origin
 from PIL import Image
 import os
 import schedule
@@ -65,6 +66,7 @@ def test():
 
 
 @app.route('/upload', methods=['POST'])
+@cross_origin()
 def upload_image():
     if 'image' not in request.files:
         return jsonify({'error': 'No image uploaded'}), 400
@@ -75,6 +77,7 @@ def upload_image():
     return jsonify({'message': 'Image uploaded successfully', 'filename': file.filename})
 
 @app.route('/download/<filename>', methods=['POST'])
+@cross_origin()
 def download_image(filename):
     data = request.get_json()  # Get JSON payload from POST body
     format = data.get('format', 'youtube-thumbnail')  # Retrieve format from JSON data
