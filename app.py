@@ -84,6 +84,7 @@ def download_image(filename):
         return jsonify({'error': f'Invalid format: {format}'}), 400
 
     file_path = os.path.join(UPLOAD_FOLDER, filename)
+    return jsonify({'PATH': file_path})
     print(file_path)
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
